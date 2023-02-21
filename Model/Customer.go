@@ -12,6 +12,7 @@ type Customer struct {
     Phone     string
     Address   string
     Transaction []Transaction
+    Token []Token
     CreatedAt time.Time
     UpdatedAt time.Time
 }

@@ -30,18 +30,20 @@ type LoginResponse struct {
 type IAuthService interface {
 	CreateCustomer(ctx context.Context, customer *model.Customer) (interface{}, error)
 	LoginCustomer(ctx context.Context, customer *model.Customer) (interface{}, error)
+	LogoutCustomer(ctx context.Context,token string)error
 }
 type AuthService struct {
 	authRepo repository.IRepository
 	UserLogService ILogService
+	TokenService ITokenService
 }
 
-// LoginCustomer implements IAuthService
 
 
-func NewAuthService(authRepo repository.IRepository, userLogService ILogService) *AuthService {
+func NewAuthService(authRepo repository.IRepository, userLogService ILogService,tokenService ITokenService) *AuthService {
 	return &AuthService{authRepo: authRepo,
 	UserLogService:userLogService,
+	TokenService: tokenService,
 	}
 }
 func (u *AuthService) CreateCustomer(ctx context.Context, customer *model.Customer) (interface{}, error) {
@@ -58,7 +60,7 @@ func (u *AuthService) CreateCustomer(ctx context.Context, customer *model.Custom
     }
 	res, err := u.authRepo.Create(ctx, customer)
 
-	// Type assertion
+	
 	customerResponse, ok := res.(*model.Customer)
 	if !ok {
 		return nil, errors.New("unexpected response from repository")
@@ -97,7 +99,12 @@ func (u *AuthService) LoginCustomer(ctx context.Context, customer *model.Custome
     if err != nil {
 		return "", err
     }
+	_,err = u.TokenService.CreateNewToken(ctx, cus.ID,token)
+    if err != nil {
+		return "", err
+    }
 		
+	
 	response := map[string]interface{}{
 		"id":         cus.ID,
 		"name":       cus.Name,
@@ -108,8 +115,16 @@ func (u *AuthService) LoginCustomer(ctx context.Context, customer *model.Custome
 	}
 	return response,nil
 }
+func (u *AuthService) LogoutCustomer(ctx context.Context,token string) (error) {
+	u.TokenService.DisableToken(ctx,token)
+	return nil
+}
+
+
 
 func (u *AuthService) CreateNewLog(err error, ctx context.Context, cus model.Customer,action string) error {
 	_, err = u.UserLogService.CreateNewLog(ctx, cus.ID, action)
 	return err
 }
+
+

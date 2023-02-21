@@ -16,7 +16,7 @@ func NewTransactionController(transService services.ITransactionService) *Transa
 	return &TransactionController{transService: transService}
 }
 func (a *TransactionController) CreateNewTransaction(c *gin.Context) {
-	
+
 	var transaction model.Transaction
 	err := c.BindJSON(&transaction)
     if err != nil {

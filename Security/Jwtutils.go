@@ -2,16 +2,25 @@ package Security
 
 import (
 	"fmt"
+	config "go-test/Config"
 	"strconv"
 	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 const SECRET = "P@ssw0rd!"
 
+type Token struct {
+	gorm.Model
+	token  string
+	isValid byte
+	
+  }
+  
 // Fungsi yang akan mengeksekusi secara otomatis ketika berhasil mendaftarkan 
 // halaman dengan gin router.
 func GenerateToken(user_id uint) (string, error) {
@@ -30,18 +39,29 @@ func GenerateToken(user_id uint) (string, error) {
 
 }
 func TokenValid(c *gin.Context) error {
+	var token Token
+	db := config.SetupDatabase()
+	
+	
 	tokenString := ExtractToken(c)
-	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+	db.First(&token, "token = ?", tokenString) 
+	if token.isValid==1{
+		_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(SECRET), nil
+		})
+		if err != nil {
+			return err
 		}
-		return []byte(SECRET), nil
-	})
-	if err != nil {
-		return err
+		return nil
+	}else{
+		return nil
 	}
-	return nil
+
 }
+
 func ExtractToken(c *gin.Context) string {
 	token := c.Query("token")
 	if token != "" {

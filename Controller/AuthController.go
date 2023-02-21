@@ -2,6 +2,7 @@ package Controller
 
 import (
 	model "go-test/Model"
+	security "go-test/Security"
 	services "go-test/Services"
 	"net/http"
 
@@ -55,4 +56,18 @@ func (a *AuthController) Login(c *gin.Context) {
  
     c.JSON(http.StatusOK, res )
 }
+func (a *AuthController) Logout(c *gin.Context) {
+  
+ 
+    token:=security.ExtractToken(c)
+    err:=a.authService.LogoutCustomer(c.Request.Context(),token)
+    if err != nil {
+        c.AbortWithStatus(http.StatusInternalServerError)
+        return
+    }
+    c.JSON(http.StatusAccepted,err)
+ 
+}
+
+
 

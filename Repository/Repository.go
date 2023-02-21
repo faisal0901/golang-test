@@ -12,6 +12,7 @@ type IRepository interface {
 	Create(ctx context.Context, data interface{})(interface{}, error)
 	CreateData(ctx context.Context, data interface{}) error
 	Update(ctx context.Context, id uint, data interface{}) (interface{}, error)
+	UpdateToken(ctx context.Context, token string, data interface{}) (interface{}, error)
 	Delete(ctx context.Context, id uint) error
 	GetByEmail(ctx context.Context, email string, result interface{}) error
 }
@@ -49,6 +50,15 @@ func (r *repository) CreateData(ctx context.Context, data interface{})  error {
 }
 func (r *repository) Update(ctx context.Context, id uint, data interface{}) (interface{}, error)  {
 	err:= r.db.Model(data).Where("id = ?", id).Updates(data).Error
+	if err != nil {
+        return nil, err
+    }
+
+  
+    return data, nil 
+}
+func (r *repository) UpdateToken(ctx context.Context, token string, data interface{}) (interface{}, error)  {
+	err:= r.db.Model(data).Where("token = ?", token).Updates(data).Error
 	if err != nil {
         return nil, err
     }
