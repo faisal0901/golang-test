@@ -9,6 +9,7 @@ import (
 
 type IMerchantService interface {
 	GetAllMerchant(ctx context.Context) ([]*model.Merchant, error)
+	CreateMerchant(ctx context.Context ,merchant *model.Merchant) (interface{}, error)
 }
 type MerchantService struct {
 	merchantRepo repository.IRepository
@@ -26,3 +27,13 @@ func (u *MerchantService) GetAllMerchant(ctx context.Context) ([]*model.Merchant
     }
 	return results,nil
 }
+
+func (u *MerchantService)	CreateMerchant(ctx context.Context,merchant *model.Merchant) (interface{}, error){
+
+	results,err := u.merchantRepo.Create(ctx,merchant)
+    if err != nil {
+        return nil, err
+    }
+	return results,nil
+}
+

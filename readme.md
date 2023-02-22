@@ -294,3 +294,40 @@ Authorization: Bearer token_jwt
 ]
 
 ```
+
+### POST /api/index/merchant
+
+Deskripsi: Endpoint untuk mendaftarkan merchant
+
+**Authorization:**
+
+Untuk melakukan akses ke API ini, dibutuhkan token JWT yang diberikan setelah proses login.
+
+**Contoh request:**
+
+```
+POST /api/index/merchant HTTP/1.1
+Host: example.com
+Authorization: Bearer token_jwt
+
+{
+    "Name":"ayam",
+    "Address":"jalan raaya bogor",
+    "Phone":"08951654315"
+
+}
+
+```
+
+**Contoh response:**
+
+```
+{
+    "ID": 2,
+    "Name": "toko maknaan enak",
+    "Address": "jalan raaya bogor",
+    "Phone": "08951654315",
+    "CreatedAt": "2023-02-22T21:19:25.1807918+07:00",
+    "UpdatedAt": "2023-02-22T21:19:25.1807918+07:00"
+}
+```

@@ -39,6 +39,7 @@ func main(){
 	protected.POST("/product", productController.CreateNewProduct)
 	protected.GET("/transaction", transactionController.GetAllTransaction)
 	protected.GET("/merchant", merchantController.GetAllMerchant)
+	protected.POST("/merchant", merchantController.CreateNewMerchant)
 	protected.POST("/logout", authController.Logout)
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
