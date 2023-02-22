@@ -10,6 +10,7 @@ import (
 
 type ITransactionService interface {
 	CreateNewTransaction(ctx context.Context,transaction *model.Transaction) (interface{}, error)
+	GetAllTransaction(ctx context.Context) ([]CustomerResponse, error)
 }
 
 type TransactionService struct {
@@ -42,4 +43,50 @@ func (u *TransactionService) CreateNewTransaction(ctx context.Context,transactio
 	res,err := u.transRepo.Create(ctx,&transactioninsert)
 	
 	return res,err
+}
+func (u *TransactionService) GetAllTransaction(ctx context.Context) ([]CustomerResponse, error) {
+    var results []*model.Customer
+	
+	err := u.transRepo.GetAllJoin(ctx, &results)
+    if err != nil {
+        return nil, err
+    }
+	var response []CustomerResponse
+    for _, customer := range results {
+        var transactions []TransactionResponse
+        for _, trans := range customer.Transaction {
+            transactions = append(transactions, TransactionResponse{
+                ID:        trans.ID,
+                Qty:       int(trans.Qty),
+                Price:     float64(trans.Price),
+                ProductID: trans.ProductID,
+            })
+        }
+		
+        response = append(response, CustomerResponse{
+            ID:          customer.ID,
+            Name:        customer.Name,
+            Email:       customer.Email,
+            Phone:       customer.Phone,
+            Address:     customer.Address,
+            Transaction: transactions,
+        })
+    }
+	
+    return response, nil
+}
+type CustomerResponse struct {
+    ID         uint            `json:"id"`
+    Name       string          `json:"name"`
+    Email      string          `json:"email"`
+    Phone      string          `json:"phone"`
+    Address    string          `json:"address"`
+    Transaction []TransactionResponse `json:"transactions"`
+}
+
+type TransactionResponse struct {
+    ID        uint    `json:"id"`
+    Qty       int     `json:"qty"`
+    Price     float64 `json:"price"`
+    ProductID uint    `json:"productId"`
 }

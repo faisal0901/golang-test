@@ -19,12 +19,15 @@ func main(){
 	logService:=services.NewLogService(repository)
 	tokenService:=services.NewTokenService(repository)
 	productService:=services.NewProductService(repository)
+	merchantService:=services.NewMerchantService(repository)
 
 	authService := services.NewAuthService(repository,logService,tokenService)
 	authController := controller.NewAuthController(authService)
 
 	transactionService:=services.NewTransactionService(repository,productService)
 	transactionController:=controller.NewTransactionController(transactionService)
+	productController:=controller.NewProductController(productService)
+	merchantController:=controller.NewMerchantController(merchantService)
 	r := gin.Default()
 	public := r.Group("/api")
 	
@@ -33,7 +36,10 @@ func main(){
 	protected := r.Group("/api/index")
 	protected.Use(middleware.JwtAuthMiddleware())
 	protected.POST("/transaction", transactionController.CreateNewTransaction)
-	// protected.POST("/logout", authController.Logout)
+	protected.POST("/product", productController.CreateNewProduct)
+	protected.GET("/transaction", transactionController.GetAllTransaction)
+	protected.GET("/merchant", merchantController.GetAllMerchant)
+	protected.PUT("/logout", authController.Logout)
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

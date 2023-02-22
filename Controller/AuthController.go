@@ -47,25 +47,25 @@ func (a *AuthController) Login(c *gin.Context) {
         return
     }
 
-    res, err := a.authService.LoginCustomer(c.Request.Context(), &customer)
-    if err != nil {
-        c.AbortWithStatus(http.StatusInternalServerError)
+    response, errResp := a.authService.LoginCustomer(c.Request.Context(), &customer)
+    if errResp.Code != 0 {
+        c.JSON(errResp.Code, errResp)
         return
     }
 
- 
-    c.JSON(http.StatusOK, res )
+    c.JSON(http.StatusOK, response )
 }
 func (a *AuthController) Logout(c *gin.Context) {
   
  
     token:=security.ExtractToken(c)
-    err:=a.authService.LogoutCustomer(c.Request.Context(),token)
+    user_id, err := security.ExtractTokenID(c)
+    res,err:=a.authService.LogoutCustomer(c.Request.Context(),token,user_id)
     if err != nil {
         c.AbortWithStatus(http.StatusInternalServerError)
         return
     }
-    c.JSON(http.StatusAccepted,err)
+    c.JSON(http.StatusOK,res)
  
 }
 

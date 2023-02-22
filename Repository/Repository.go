@@ -15,6 +15,8 @@ type IRepository interface {
 	UpdateToken(ctx context.Context, token string, data interface{}) (interface{}, error)
 	Delete(ctx context.Context, id uint) error
 	GetByEmail(ctx context.Context, email string, result interface{}) error
+	GetAllJoin(ctx context.Context, results interface{}) error
+	GetAllProduct(ctx context.Context, results interface{}) error
 }
 
 type repository struct {
@@ -35,6 +37,7 @@ func (r *repository) GetByID(ctx context.Context, id uint, result interface{}) e
 func (r *repository) GetByEmail(ctx context.Context, email string, result interface{}) error {
     return r.db.Where("email = ?", email).First(result).Error
 }
+
 func (r *repository) Create(ctx context.Context, data interface{}) (interface{}, error) {
     err := r.db.Create(data).Error
     if err != nil {
@@ -58,15 +61,26 @@ func (r *repository) Update(ctx context.Context, id uint, data interface{}) (int
     return data, nil 
 }
 func (r *repository) UpdateToken(ctx context.Context, token string, data interface{}) (interface{}, error)  {
-	err:= r.db.Model(data).Where("token = ?", token).Updates(data).Error
+	updateMap := map[string]interface{}{"is_valid": 0}
+	err := r.db.Model(data).Where("token = ?", token).Updates(updateMap).Error
 	if err != nil {
-        return nil, err
-    }
-
-  
-    return data, nil 
+		return nil, err
+	}
+	return data, nil
 }
 
 func (r *repository) Delete(ctx context.Context, id uint) error {
 	return r.db.Delete(nil, id).Error
+}
+func (r *repository) GetAllJoin(ctx context.Context, results interface{}) error {
+    if err := r.db.Preload("Transaction").Find(results).Error; err != nil {
+        return err
+    }
+    return nil
+}
+func (r *repository) GetAllProduct(ctx context.Context, results interface{}) error {
+    if err := r.db.Preload("Products").Find(results).Error; err != nil {
+        return err
+    }
+    return nil
 }

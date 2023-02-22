@@ -3,34 +3,22 @@ package Services
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	model "go-test/Model"
 	repository "go-test/Repository"
+	response "go-test/Response"
 	security "go-test/Security"
 	"time"
 
 	bcrypt "golang.org/x/crypto/bcrypt"
 )
 
-type CustomerResponse struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Phone     string    `json:"phone"`
-	Address   string    `json:"address"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-type LoginResponse struct {
-	ID        int       `json:"id"`
-	Email     string    `json:"email"`
-	Password  string    `json:"phone"`
-	Token   string    `json:"address"`
-}
+
 type IAuthService interface {
 	CreateCustomer(ctx context.Context, customer *model.Customer) (interface{}, error)
-	LoginCustomer(ctx context.Context, customer *model.Customer) (interface{}, error)
-	LogoutCustomer(ctx context.Context,token string)error
+	LoginCustomer(ctx context.Context, customer *model.Customer)(*response.LoginResponse,  ErrorResponse)
+	LogoutCustomer(ctx context.Context,token string,id uint)(interface{},error)
 }
 type AuthService struct {
 	authRepo repository.IRepository
@@ -67,57 +55,92 @@ func (u *AuthService) CreateCustomer(ctx context.Context, customer *model.Custom
 	}
 
 	
-	response := map[string]interface{}{
-		"id":         customerResponse.ID,
-		"name":       customerResponse.Name,
-		"email":      customerResponse.Email,
-		"phone":      customerResponse.Phone,
-		"address":    customerResponse.Address,
-		"created_at": customerResponse.CreatedAt,
-		"updated_at": customerResponse.UpdatedAt,
-		"message":    "customer created successfully",
+	response := &response.CustomerResponse{
+		ID:        int(customerResponse.ID),
+		Name:      customerResponse.Name,
+		Email:     customerResponse.Email,
+		Phone:      customerResponse.Phone,
+		Address:   customer.Address,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+
 	}
 
 	return response, err
 }
-func (u *AuthService) LoginCustomer(ctx context.Context, customer *model.Customer) (interface{}, error) {
-	
-	var cus model.Customer
-    err := u.authRepo.GetByEmail(ctx, customer.Email, &cus)
-    if err != nil {
-        return "", err
-    }
-	err = bcrypt.CompareHashAndPassword([]byte(cus.Password), []byte(customer.Password))
-    if err != nil {
-        return "", err
-    }
-
-	token,err := security.GenerateToken(cus.ID)
-	
-	
-	err = u.CreateNewLog(err, ctx, cus,"login")
-    if err != nil {
-		return "", err
-    }
-	_,err = u.TokenService.CreateNewToken(ctx, cus.ID,token)
-    if err != nil {
-		return "", err
-    }
-		
-	
-	response := map[string]interface{}{
-		"id":         cus.ID,
-		"name":       cus.Name,
-		"email":      cus.Email,
-		"password":   cus.Password,
-		"token":    token,
-		"message":    "login succesfuly",
-	}
-	return response,nil
+type ErrorResponse struct {
+    Error string `json:"error"`
+	Code  int    `json:"code"`
 }
-func (u *AuthService) LogoutCustomer(ctx context.Context,token string) (error) {
-	u.TokenService.DisableToken(ctx,token)
-	return nil
+
+func (u *AuthService) LoginCustomer(ctx context.Context, customer *model.Customer) (*response.LoginResponse,  ErrorResponse) {
+	errResp := ErrorResponse{}
+	
+
+	// Get customer by email
+	var cus model.Customer
+	err := u.authRepo.GetByEmail(ctx, customer.Email, &cus)
+	if err != nil {
+		errResp.Error = "Email not found"
+		errResp.Code = http.StatusBadRequest
+		return nil, errResp
+	}
+
+	// Check password
+	err = bcrypt.CompareHashAndPassword([]byte(cus.Password), []byte(customer.Password))
+	if err != nil {
+		errResp.Error = "Incorrect password"
+		errResp.Code = http.StatusBadRequest
+		return nil, errResp
+	}
+
+	// Generate token
+	token, err := security.GenerateToken(cus.ID)
+	if err != nil {
+		errResp.Error = "Failed to generate token"
+		errResp.Code = http.StatusInternalServerError
+		return nil, errResp
+	}
+
+	// Create new log
+	err = u.CreateNewLog(err, ctx, cus, "login")
+	if err != nil {
+		errResp.Error = "Failed to create new log"
+		errResp.Code = http.StatusInternalServerError
+		return nil, errResp
+	}
+
+	// Create new token
+	_, err = u.TokenService.CreateNewToken(ctx, cus.ID, token)
+	if err != nil {
+		errResp.Error = "Failed to create new token"
+		errResp.Code = http.StatusInternalServerError
+		return nil, errResp
+	}
+
+	// Return success response
+	response := &response.LoginResponse{
+		ID:       int(cus.ID),
+		Email:    cus.Email,
+		Password: cus.Password,
+		Token:    token,
+	}
+
+  return response, errResp
+
+}
+
+
+func (u *AuthService) LogoutCustomer(ctx context.Context,token string,id uint) (interface{},error) {
+	
+	res, err := u.TokenService.DisableToken(ctx, token,id )
+	if err != nil {
+		// error handling
+		return "",nil
+	}
+	_, err = u.UserLogService.CreateNewLog(ctx, id, "logout")
+	return res,nil
+	
 }
 
 

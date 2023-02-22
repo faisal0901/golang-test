@@ -3,6 +3,7 @@ package Security
 import (
 	"fmt"
 	config "go-test/Config"
+	model "go-test/Model"
 	"strconv"
 	"strings"
 	"time"
@@ -39,13 +40,14 @@ func GenerateToken(user_id uint) (string, error) {
 
 }
 func TokenValid(c *gin.Context) error {
-	var token Token
+	var token model.Token
 	db := config.SetupDatabase()
 	
 	
 	tokenString := ExtractToken(c)
-	db.First(&token, "token = ?", tokenString) 
-	if token.isValid==1{
+	db.Find(&token, "token = ?", tokenString) 
+	fmt.Println(token.IsValid)
+	if token.IsValid==1{
 		_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -57,8 +59,9 @@ func TokenValid(c *gin.Context) error {
 		}
 		return nil
 	}else{
-		return nil
+		return fmt.Errorf("Token is not valid")
 	}
+
 
 }
 

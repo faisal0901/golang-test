@@ -4,13 +4,14 @@ package Services
 //product id
 import (
 	"context"
-	"fmt"
 	model "go-test/Model"
 	repository "go-test/Repository"
+	response "go-test/Response"
 )
 
 type IProductService interface {
 	GetProductById(ctx context.Context,id uint) (*model.Product, error)
+	CreateNewProduct(ctx context.Context,product *model.Product) (interface{}, error)
 }
 
 type ProductService struct {
@@ -23,7 +24,7 @@ func NewProductService(productRepo repository.IRepository) * ProductService {
 
 func (u *ProductService)GetProductById(ctx context.Context,id uint) (*model.Product, error){
 	var p model.Product
-	fmt.Println(id)
+	
     err := u.productRepo.GetByID(ctx, id, &p)
     if err != nil {
         return &p, err
@@ -31,3 +32,23 @@ func (u *ProductService)GetProductById(ctx context.Context,id uint) (*model.Prod
 	
 	return &p,err
 }
+func (u *ProductService)CreateNewProduct(ctx context.Context,product *model.Product) (interface{}, error){
+
+
+    res,err := u.productRepo.Create(ctx, product)
+    if err != nil {
+        return res, err
+    }
+	respone := &response.ProductResponse{
+        ID:          product.ID,
+        Name:        product.Name,
+        Description: product.Description,
+        MerchantID:  product.MerchantID,
+        Price:       uint(product.Price),
+        CreatedAt:   product.CreatedAt,
+        UpdatedAt:   product.UpdatedAt,
+    }
+	
+	return respone,err
+}
+
