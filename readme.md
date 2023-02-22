@@ -1,3 +1,17 @@
+### Pengaturan Environment untuk Menghubungkan ke Database MS SQL Server
+
+Sebelum dapat menggunakan aplikasi ini, pastikan Anda telah melakukan pengaturan environment untuk menghubungkan aplikasi dengan database MS SQL Server. Langkah-langkah yang perlu dilakukan adalah sebagai berikut:
+
+1. Pastikan Anda telah memiliki instance MS SQL Server yang dapat digunakan. Jika belum, silakan mengunduh dan menginstal instance MS SQL Server dari situs resmi Microsoft.
+
+2. Buka file .env pada direktori root aplikasi,DB_link
+
+### Menjalankan Aplikasi Menggunakan Perintah go run
+
+1. Ketikkan perintah `go run main.go` pada terminal atau command prompt, dan tekan enter. Aplikasi akan mulai dijalankan.
+
+2. Buka browser dan akses http://localhost:8080/ untuk mengakses aplikasi. Jika tidak ada masalah, maka tampilan halaman utama aplikasi akan muncul.
+
 # Nama API
 
 API ini menyediakan layanan untuk ...
@@ -192,4 +206,91 @@ Authorization: Bearer token_jwt
     },
 
 ]
+```
+
+### POST /api/index/product
+
+Deskripsi: Endpoint untuk menambahkan produk baru ke dalam database
+
+**Authorization:**
+
+Untuk melakukan akses ke API ini, dibutuhkan token JWT yang diberikan setelah proses login.
+
+**Contoh request:**
+
+```
+POST /api/index/product HTTP/1.1
+Host: example.com
+Content-Type: application/json
+Authorization: Bearer token_jwt
+
+{
+"Name":"ayam",
+"MerchantID":1,
+"Price":28000,
+"Category":"makanan",
+"Description":"makanan yang enak banget"
+}
+
+```
+
+**Contoh response:**
+
+```
+{
+    "id": 6,
+    "name": "ayam",
+    "description": "makanan yang enak banget",
+    "merchant_id": 1,
+    "price": 28000,
+    "created_at": "2023-02-22T13:09:58.2069911+07:00",
+    "updated_at": "2023-02-22T13:09:58.2069911+07:00"
+}
+
+```
+
+### GET /api/index/merchant
+
+Deskripsi: Endpoint untuk melihat daftar merchant beserta produk yang dimiliki oleh masing-masing merchant.
+
+**Authorization:**
+
+Untuk melakukan akses ke API ini, dibutuhkan token JWT yang diberikan setelah proses login.
+
+**Contoh request:**
+
+```
+GET /api/index/merchant HTTP/1.1
+Host: example.com
+Authorization: Bearer token_jwt
+
+```
+
+**Contoh response:**
+
+```
+[
+    {
+        "DeletedAt": null,
+        "ID": 1,
+        "Name": "toko kue cisalak",
+        "Address": "jalan cisalak",
+        "Phone": "089516543215\r\n",
+        "Products": [
+            {
+                "ID": 1,
+                "Name": "kue kering",
+                "Description": "kue kering isi coklat",
+                "MerchantID": 1,
+                "Price": 5000,
+                "CreatedAt": "2023-02-20T18:49:50Z",
+                "UpdatedAt": "2023-02-20T18:49:51Z"
+            },
+
+        ],
+        "CreatedAt": "2023-02-20T18:50:16Z",
+        "UpdatedAt": "2023-02-20T18:50:16Z"
+    }
+]
+
 ```
